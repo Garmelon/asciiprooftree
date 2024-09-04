@@ -1,0 +1,8 @@
+# sbt
+/.bsp/
+target/
+
+# IntelliJ IDEA
+/.idea/*
+!/.idea/codeStyles/
+!/.idea/codeStyles/*
