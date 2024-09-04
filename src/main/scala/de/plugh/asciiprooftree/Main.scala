@@ -1,24 +1,18 @@
 package de.plugh.asciiprooftree
 
 import de.plugh.asciiprooftree.file.Formatter
+import org.rogach.scallop.*
 
 import java.nio.file.{Files, Path}
 
-@main
-def main(args: String*): Unit = args match
-  case Seq() => run()
-  case Seq(path) => run(Path.of(path))
-  case Seq(path, marker) => run(Path.of(path), marker)
-  case _ =>
-    println("Usage: asciiprooftree [path] [marker]")
-    System.exit(1)
+class Conf(args: Seq[String]) extends ScallopConf(args):
+  val path: ScallopOption[Path] = trailArg[Path]()
+  val marker: ScallopOption[String] = opt[String](default = Some("§"))
+  verify()
 
 @main
-def testMain(path: String): Unit = run(Path.of(path))
-
-def run(path: Path = Path.of(""), marker: String = "§"): Unit =
-  println(s"Path: $path")
-  println(s"Marker: $marker")
-  val text = Files.readString(path)
-  val newText = Formatter.reformat(text, marker = marker)
-  Files.writeString(path, newText)
+def main(args: String*): Unit =
+  val conf = new Conf(args)
+  val text = Files.readString(conf.path())
+  val newText = Formatter.reformat(text, marker = conf.marker())
+  Files.writeString(conf.path(), newText)
