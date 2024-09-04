@@ -65,7 +65,7 @@ case class Parser(lines: Lines):
 
 object Parser:
   def apply(lines: Seq[String]): Parser =
-    val trimmedLines = lines.map(Line(_).trim)
-    Parser(Lines(trimmedLines.toIndexedSeq))
+    val trimmedLines = lines.reverseIterator.map(Line(_).trim).toIndexedSeq
+    Parser(Lines(trimmedLines))
 
-  def apply(text: String): Parser = apply(text.linesIterator.toSeq.reverse)
+  def apply(text: String): Parser = apply(text.linesIterator.toSeq)
