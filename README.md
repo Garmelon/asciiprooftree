@@ -18,8 +18,8 @@ To reformat all proof trees in your project, run:
 java -jar asciiprooftree.jar path/to/your/src
 ```
 
-If you want to use a different marker string than `§`, you can use the `--marker` option:
+For available options, run:
 
 ```shell
-java -jar asciiprooftree.jar path/to/your/src --marker 't>'
+java -jar asciiprooftree.jar --help
 ```

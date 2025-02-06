@@ -1,45 +1,57 @@
 package de.plugh.asciiprooftree.file
 
-import de.plugh.asciiprooftree.tree.{Line, Parser}
+import de.plugh.asciiprooftree.tree.Parser
 
 import scala.collection.mutable
+import scala.util.boundary
+import scala.util.matching.Regex
+import scala.util.matching.Regex.Match
 
-private class Formatter(marker: String):
-  private val lines: mutable.Buffer[String] = mutable.Buffer()
-  private var block: Option[Block] = None
+case class Formatter(blockRe: Regex, lineRe: Regex):
+  private val blockReI = blockRe.pattern.namedGroups().get("block")
+  private val lineReI = lineRe.pattern.namedGroups().get("block")
 
-  private def flushBlock(): Unit = for block <- this.block do
-    val newBlock = Parser(block.content).parse match
-      case Some(tree) => block.replace(tree.formatted.toString.linesIterator.toIndexedSeq)
-      case None => block
-    lines.appendAll(newBlock.toLines)
-    this.block = None
+  private def parseBlockLine(line: String): Option[Block] = boundary:
+    val m = lineRe.findFirstMatchIn(line).getOrElse(boundary.break(None))
+    require(m.end(lineReI) == line.length)
+    val prefix = line.slice(0, m.start(lineReI))
+    val content = line.slice(m.start(lineReI), line.length)
+    Some(Block(prefix, content))
 
-  private def pushBlockLine(prefix: String, content: String): Unit = this.block match
-    case Some(block) if Line(block.last._1).width == Line(prefix).width =>
-      this.block = Some(block.extend(prefix, content))
-    case _ =>
-      flushBlock()
-      this.block = Some(Block(prefix, content))
+  private def parseBlockLines(lines: String): Option[Block] =
+    val blocks = lines.linesIterator.map(parseBlockLine).toSeq
+    if blocks.isEmpty || blocks.exists(_.isEmpty) then return None
+    Some(blocks.flatten.reduce(_.extend(_)))
 
-  private def pushPlainLine(line: String): Unit =
-    flushBlock()
-    lines.append(line)
+  private def parseBlock(text: String, m: Match): Option[BlockInfo] = boundary:
+    val block = parseBlockLines(m.group(blockReI)).getOrElse(boundary.break(None))
+    val tree = Parser(block.content).parse.getOrElse(boundary.break(None))
+    Some(BlockInfo(
+      block = block,
+      tree = tree,
+      start = m.start(blockReI),
+      end = m.end(blockReI),
+      endsWithNewline = text.endsWith("\n"),
+    ))
 
-  private def pushLine(line: String): Unit =
-    val i = line.indexOf(marker)
-    if i < 0 then pushPlainLine(line)
-    else
-      val prefix = line.slice(0, i + marker.length)
-      val content = line.slice(i + marker.length, line.length)
-      pushBlockLine(prefix, content)
+  def findBlocks(text: String): Seq[BlockInfo] = blockRe.findAllMatchIn(text).flatMap(parseBlock(text, _)).toSeq
 
-  private def pushText(text: String): Unit = text.linesIterator.foreach(pushLine)
+  def reformat(text: String): String =
+    // Things just become nicer if we can assume that even the last line ends with a newline.
+    val cleanText = if text.endsWith("\n") then text else text + "\n"
 
-  override def toString: String = lines.map(l => s"$l\n").mkString
+    val result = StringBuilder()
+    var resultEnd = 0
 
-object Formatter:
-  def reformat(text: String, marker: String = "§"): String =
-    val fmt = new Formatter(marker)
-    fmt.pushText(text)
-    fmt.toString
+    for info <- findBlocks(cleanText) do
+      if resultEnd < info.start then result.append(cleanText.slice(resultEnd, info.start))
+      val block = info.block.replace(info.tree.formatted.toString.linesIterator.toIndexedSeq) // Clunky :D
+      result.append(block.toLines.mkString("\n"))
+      if info.endsWithNewline then result.append("\n")
+      resultEnd = info.end
+
+    // No need to update resultEnd since we don't need it from this point on
+    if resultEnd < cleanText.length then result.append(cleanText.slice(resultEnd, cleanText.length))
+
+    // Remove final newline if the original text didn't have it
+    if text.endsWith("\n") then result.toString() else result.toString().stripLineEnd

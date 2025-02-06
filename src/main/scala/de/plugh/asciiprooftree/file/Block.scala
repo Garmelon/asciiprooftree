@@ -7,7 +7,8 @@ case class Block(lines: Seq[(String, String)]):
   def content: Seq[String] = lines.map((_, content) => content)
   def toLines: Seq[String] = lines.map((prefix, content) => s"$prefix  $content")
 
-  def extend(prefix: String, content: String): Block = Block(lines :+ (prefix, content))
+  def extend(block: Block): Block = Block(lines ++ block.lines)
+  def extend(prefix: String, content: String): Block = extend(Block(prefix, content))
 
   def resize(height: Int): Block =
     require(height > 0)
