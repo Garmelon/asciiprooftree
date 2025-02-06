@@ -1,6 +1,6 @@
 package de.plugh.asciiprooftree.tree
 
-case class ProofTreeFormatter(lineOverhang: Int = 0):
+case class ProofTreeFormatter(separation: Int = 3, lineOverhang: Int = 0):
   private def formatLine(start: Int, end: Int, rule: String): Line =
     val lineStart = start - lineOverhang
     val lineEnd = end + lineOverhang
@@ -12,7 +12,7 @@ case class ProofTreeFormatter(lineOverhang: Int = 0):
     val fPremises = tree
       .premises
       .map(formatTree)
-      .reduceOption(_.joinHorizontally(_))
+      .reduceOption(_.joinHorizontally(_, separation))
       .getOrElse(FormattedProofTree.empty)
 
     val lConclusion = tree.conclusion match

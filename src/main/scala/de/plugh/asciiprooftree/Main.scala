@@ -19,6 +19,7 @@ class Conf(args: Seq[String]) extends ScallopConf(args):
   val useScalaDocstringRegexes: ScallopOption[Boolean] = opt[Boolean]()
   val noHeuristics: ScallopOption[Boolean] = opt[Boolean]()
   val indent: ScallopOption[Int] = opt[Int](default = Some(2))
+  val separation: ScallopOption[Int] = opt[Int](default = Some(3))
   val lineOverhang: ScallopOption[Int] = opt[Int](default = Some(0))
   verify()
 
@@ -35,6 +36,7 @@ def main(args: String*): Unit =
     lineRe = conf.lineRegex.map(Regex(_)).getOrElse(defaultLineRe),
     heuristics = !conf.noHeuristics(),
     indent = conf.indent(),
+    separation = conf.separation(),
     lineOverhang = conf.lineOverhang(),
   )
 

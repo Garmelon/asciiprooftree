@@ -12,17 +12,16 @@ case class FormattedProofTree(lines: Lines, conclusionStart: Int, conclusionEnd:
 
   def extend(line: Line): FormattedProofTree = copy(lines = lines.extend(line))
 
-  def joinHorizontally(right: FormattedProofTree): FormattedProofTree = FormattedProofTree.joinHorizontally(this, right)
+  def joinHorizontally(right: FormattedProofTree, separation: Int): FormattedProofTree = FormattedProofTree
+    .joinHorizontally(this, right, separation)
 
   def toLines: IndexedSeq[String] = lines.toLines
 
 object FormattedProofTree:
-  val separation = 3
-
   def empty: FormattedProofTree = FormattedProofTree(lines = Lines.empty, conclusionStart = 0, conclusionEnd = 0)
 
-  def joinHorizontally(left: FormattedProofTree, right: FormattedProofTree): FormattedProofTree =
-    val (lines, deltaRight) = left.lines.joinHorizontally(right.lines)
+  def joinHorizontally(left: FormattedProofTree, right: FormattedProofTree, separation: Int): FormattedProofTree =
+    val (lines, deltaRight) = left.lines.joinHorizontally(right.lines, separation)
     FormattedProofTree(
       lines = lines,
       conclusionStart = left.conclusionStart min (right.conclusionStart + deltaRight),

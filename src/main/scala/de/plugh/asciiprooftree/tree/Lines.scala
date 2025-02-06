@@ -7,7 +7,7 @@ case class Lines(lines: IndexedSeq[Line]):
   def shift(delta: Int): Lines = Lines(lines.map(_.shift(delta)))
   def extend(line: Line): Lines = Lines(line +: lines)
 
-  def joinHorizontally(right: Lines): (Lines, Int) = Lines.joinHorizontally(this, right)
+  def joinHorizontally(right: Lines, separation: Int): (Lines, Int) = Lines.joinHorizontally(this, right, separation)
 
   def toLines: IndexedSeq[String] = lines.reverse.map(_.toString)
 
@@ -26,7 +26,7 @@ object Lines:
       result = result.max(minDelta(left.at(y), right.at(y + 1), separation))
     result
 
-  def joinHorizontally(left: Lines, right: Lines, separation: Int = 3): (Lines, Int) =
+  def joinHorizontally(left: Lines, right: Lines, separation: Int): (Lines, Int) =
     val deltaRight = minDeltaForVisualSeparation(left, right, separation)
     val lines =
       for y <- 0 until (left.height max right.height) yield (left.at(y), right.at(y)) match

@@ -7,10 +7,17 @@ import scala.util.boundary
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 
-case class FileFormatter(blockRe: Regex, lineRe: Regex, heuristics: Boolean, indent: Int, lineOverhang: Int):
+case class FileFormatter(
+    blockRe: Regex,
+    lineRe: Regex,
+    heuristics: Boolean,
+    indent: Int,
+    separation: Int,
+    lineOverhang: Int,
+):
   private val blockReI = blockRe.pattern.namedGroups().get("block")
   private val lineReI = lineRe.pattern.namedGroups().get("block")
-  private val proofTreeFormatter = ProofTreeFormatter(lineOverhang = lineOverhang)
+  private val proofTreeFormatter = ProofTreeFormatter(separation = separation, lineOverhang = lineOverhang)
 
   private def parseBlockLine(line: String): Option[Block] = boundary:
     val m = lineRe.findFirstMatchIn(line).getOrElse(boundary.break(None))
