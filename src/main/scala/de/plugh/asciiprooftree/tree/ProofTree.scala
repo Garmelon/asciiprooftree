@@ -43,6 +43,8 @@ case class ProofTree(premises: Seq[ProofTree] = Seq(), line: Option[String] = No
 
     combined.copy(conclusionStart = belowCentered.start, conclusionEnd = belowCentered.end)
 
+  def containsNoLines: Boolean = line.isEmpty && premises.forall(_.containsNoLines)
+
 object ProofTree:
   def empty: ProofTree = ProofTree()
   def star: ProofTree = ProofTree().addConclusion("*")

@@ -7,7 +7,7 @@ import scala.util.boundary
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 
-case class Formatter(indent: Int, blockRe: Regex, lineRe: Regex):
+case class Formatter(blockRe: Regex, lineRe: Regex, indent: Int, heuristics: Boolean):
   private val blockReI = blockRe.pattern.namedGroups().get("block")
   private val lineReI = lineRe.pattern.namedGroups().get("block")
 
@@ -26,6 +26,7 @@ case class Formatter(indent: Int, blockRe: Regex, lineRe: Regex):
   private def parseBlock(text: String, m: Match): Option[BlockInfo] = boundary:
     val block = parseBlockLines(m.group(blockReI)).getOrElse(boundary.break(None))
     val tree = Parser(block.content).parse.getOrElse(boundary.break(None))
+    if heuristics && tree.containsNoLines then return None
     Some(BlockInfo(
       block = block,
       tree = tree,

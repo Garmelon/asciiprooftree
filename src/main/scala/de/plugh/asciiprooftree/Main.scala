@@ -12,16 +12,21 @@ val lineRe = "^\\s*§(?<block>.*)$".r
 
 class Conf(args: Seq[String]) extends ScallopConf(args):
   val path: ScallopOption[Path] = trailArg[Path]()
-  val indent: ScallopOption[Int] = opt[Int](default = Some(2))
   val blockRegex: ScallopOption[String] = opt[String](default = Some(blockRe.regex))
   val lineRegex: ScallopOption[String] = opt[String](default = Some(lineRe.regex))
+  val indent: ScallopOption[Int] = opt[Int](default = Some(2))
+  val noHeuristics: ScallopOption[Boolean] = opt[Boolean]()
   verify()
 
 @main
 def main(args: String*): Unit =
   val conf = new Conf(args)
-  val formatter =
-    Formatter(indent = conf.indent(), blockRe = Regex(conf.blockRegex()), lineRe = Regex(conf.lineRegex()))
+  val formatter = Formatter(
+    blockRe = Regex(conf.blockRegex()),
+    lineRe = Regex(conf.lineRegex()),
+    indent = conf.indent(),
+    heuristics = !conf.noHeuristics(),
+  )
   reformat(conf.path(), formatter)
 
 def reformat(path: Path, formatter: Formatter): Unit =
