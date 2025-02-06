@@ -8,6 +8,25 @@ case class ProofTreeFormatter(separation: Int = 3, lineOverhang: Int = 0):
     val lineText = if rule.isEmpty then lineStr else s"$lineStr $rule"
     Line(lineText, lineStart)
 
+  private def centerPremisesAndConclusion(above: FormattedProofTree, below: Line): (FormattedProofTree, Line) =
+    val aboveStart = above.conclusionStart
+    val aboveWidth = above.conclusionEnd - above.conclusionStart
+    val belowStart = below.start
+    val belowWidth = below.end - below.start
+
+    // Distribute remaining space evenly, but breaking ties by making the left side smaller than the right side.
+    // This biases the centering algorithm to the left when rounding.
+    val remainingWidth = (aboveWidth max belowWidth) - (aboveWidth min belowWidth)
+    val targetIndent = remainingWidth / 2
+
+    if belowWidth < aboveWidth then
+      val targetStart = aboveStart + targetIndent
+      (above, below.shift(targetStart - belowStart))
+    else if belowWidth > aboveWidth then
+      val targetStart = belowStart + targetIndent
+      (above.shift(targetStart - aboveStart), below)
+    else (above, below)
+
   def formatTree(tree: ProofTree): FormattedProofTree =
     val fPremises = tree
       .premises
@@ -21,13 +40,7 @@ case class ProofTreeFormatter(separation: Int = 3, lineOverhang: Int = 0):
           case Some(rule) => fPremises.extend(formatLine(fPremises.conclusionStart, fPremises.conclusionEnd, rule))
           case None => fPremises
 
-    val aboveMiddle = (fPremises.conclusionStart + fPremises.conclusionEnd) / 2
-    val belowMiddle = (lConclusion.start + lConclusion.end) / 2
-
-    val (aboveCentered, belowCentered) =
-      if aboveMiddle < belowMiddle then (fPremises.shift(belowMiddle - aboveMiddle), lConclusion)
-      else if aboveMiddle > belowMiddle then (fPremises, lConclusion.shift(aboveMiddle - belowMiddle))
-      else (fPremises, lConclusion)
+    val (aboveCentered, belowCentered) = centerPremisesAndConclusion(fPremises, lConclusion)
 
     val combined = tree.line match
       case Some(rule) =>
