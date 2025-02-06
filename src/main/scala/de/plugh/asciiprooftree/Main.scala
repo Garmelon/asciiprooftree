@@ -7,13 +7,16 @@ import java.nio.file.{Files, Path}
 import scala.jdk.StreamConverters.*
 import scala.util.matching.Regex
 
-val blockRe = "(?m)^(?<block>(\\s*)§.*\\n(?:\\2§.*\\n)*)".r
-val lineRe = "^\\s*§(?<block>.*)$".r
+val markerBlockRe = "(?m)^(?<block>(\\s*)§.*\\n(?:\\2§.*\\n)*)".r
+val markerLineRe = "^\\s*§(?<block>.*)$".r
+val scalaDocstringBlockRe = "(?m)^(\\s*)\\* \\{\\{\\{\\n(?<block>(\\1\\*.*\\n)+?)\\1\\* }}}\\n".r
+val scalaDocstringLineRe = "^\\s*\\*(?<block>.*)$".r
 
 class Conf(args: Seq[String]) extends ScallopConf(args):
   val path: ScallopOption[Path] = trailArg[Path]()
-  val blockRegex: ScallopOption[String] = opt[String](default = Some(blockRe.regex))
-  val lineRegex: ScallopOption[String] = opt[String](default = Some(lineRe.regex))
+  val blockRegex: ScallopOption[String] = opt[String]()
+  val lineRegex: ScallopOption[String] = opt[String]()
+  val useScalaDocstringRegexes: ScallopOption[Boolean] = opt[Boolean]()
   val indent: ScallopOption[Int] = opt[Int](default = Some(2))
   val noHeuristics: ScallopOption[Boolean] = opt[Boolean]()
   verify()
@@ -21,12 +24,18 @@ class Conf(args: Seq[String]) extends ScallopConf(args):
 @main
 def main(args: String*): Unit =
   val conf = new Conf(args)
+
+  val (defaultBlockRe, defaultLineRe) =
+    if conf.useScalaDocstringRegexes() then (scalaDocstringBlockRe, scalaDocstringLineRe)
+    else (markerBlockRe, markerLineRe)
+
   val formatter = Formatter(
-    blockRe = Regex(conf.blockRegex()),
-    lineRe = Regex(conf.lineRegex()),
+    blockRe = conf.blockRegex.map(Regex(_)).getOrElse(defaultBlockRe),
+    lineRe = conf.lineRegex.map(Regex(_)).getOrElse(defaultLineRe),
     indent = conf.indent(),
     heuristics = !conf.noHeuristics(),
   )
+
   reformat(conf.path(), formatter)
 
 def reformat(path: Path, formatter: Formatter): Unit =
