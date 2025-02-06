@@ -5,7 +5,7 @@ case class Block(lines: Seq[(String, String)]):
 
   def last: (String, String) = lines.last
   def content: Seq[String] = lines.map((_, content) => content)
-  def toLines: Seq[String] = lines.map((prefix, content) => s"$prefix  $content")
+  def toLines(indent: Int): Seq[String] = lines.map((prefix, content) => prefix + " " * indent + content)
 
   def extend(block: Block): Block = Block(lines ++ block.lines)
   def extend(prefix: String, content: String): Block = extend(Block(prefix, content))

@@ -7,7 +7,7 @@ import scala.util.boundary
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 
-case class Formatter(blockRe: Regex, lineRe: Regex):
+case class Formatter(indent: Int, blockRe: Regex, lineRe: Regex):
   private val blockReI = blockRe.pattern.namedGroups().get("block")
   private val lineReI = lineRe.pattern.namedGroups().get("block")
 
@@ -46,7 +46,7 @@ case class Formatter(blockRe: Regex, lineRe: Regex):
     for info <- findBlocks(cleanText) do
       if resultEnd < info.start then result.append(cleanText.slice(resultEnd, info.start))
       val block = info.block.replace(info.tree.formatted.toString.linesIterator.toIndexedSeq) // Clunky :D
-      result.append(block.toLines.mkString("\n"))
+      result.append(block.toLines(indent).mkString("\n"))
       if info.endsWithNewline then result.append("\n")
       resultEnd = info.end
 
