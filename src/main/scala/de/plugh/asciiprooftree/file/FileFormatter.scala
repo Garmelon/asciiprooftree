@@ -1,15 +1,16 @@
 package de.plugh.asciiprooftree.file
 
-import de.plugh.asciiprooftree.tree.Parser
+import de.plugh.asciiprooftree.tree.{Parser, ProofTreeFormatter}
 
 import scala.collection.mutable
 import scala.util.boundary
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 
-case class Formatter(blockRe: Regex, lineRe: Regex, indent: Int, heuristics: Boolean):
+case class FileFormatter(blockRe: Regex, lineRe: Regex, heuristics: Boolean, indent: Int, lineOverhang: Int):
   private val blockReI = blockRe.pattern.namedGroups().get("block")
   private val lineReI = lineRe.pattern.namedGroups().get("block")
+  private val proofTreeFormatter = ProofTreeFormatter(lineOverhang = lineOverhang)
 
   private def parseBlockLine(line: String): Option[Block] = boundary:
     val m = lineRe.findFirstMatchIn(line).getOrElse(boundary.break(None))
@@ -46,7 +47,8 @@ case class Formatter(blockRe: Regex, lineRe: Regex, indent: Int, heuristics: Boo
 
     for info <- findBlocks(cleanText) do
       if resultEnd < info.start then result.append(cleanText.slice(resultEnd, info.start))
-      val block = info.block.replace(info.tree.formatted.toString.linesIterator.toIndexedSeq) // Clunky :D
+      val formattedTree = proofTreeFormatter.formatTree(info.tree)
+      val block = info.block.replace(formattedTree.shiftAlignLeft.toLines)
       result.append(block.toLines(indent).mkString("\n"))
       if info.endsWithNewline then result.append("\n")
       resultEnd = info.end

@@ -7,11 +7,14 @@ case class FormattedProofTree(lines: Lines, conclusionStart: Int, conclusionEnd:
     conclusionEnd = conclusionEnd + delta,
   )
 
+  /** Shift so that the start is always zero. */
+  def shiftAlignLeft: FormattedProofTree = shift(-lines.lines.map(_.start).minOption.getOrElse(0))
+
   def extend(line: Line): FormattedProofTree = copy(lines = lines.extend(line))
 
   def joinHorizontally(right: FormattedProofTree): FormattedProofTree = FormattedProofTree.joinHorizontally(this, right)
 
-  override def toString: String = lines.toString
+  def toLines: IndexedSeq[String] = lines.toLines
 
 object FormattedProofTree:
   val separation = 3

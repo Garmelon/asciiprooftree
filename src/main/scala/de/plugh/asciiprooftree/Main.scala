@@ -1,6 +1,6 @@
 package de.plugh.asciiprooftree
 
-import de.plugh.asciiprooftree.file.Formatter
+import de.plugh.asciiprooftree.file.FileFormatter
 import org.rogach.scallop.*
 
 import java.nio.file.{Files, Path}
@@ -17,8 +17,9 @@ class Conf(args: Seq[String]) extends ScallopConf(args):
   val blockRegex: ScallopOption[String] = opt[String]()
   val lineRegex: ScallopOption[String] = opt[String]()
   val useScalaDocstringRegexes: ScallopOption[Boolean] = opt[Boolean]()
-  val indent: ScallopOption[Int] = opt[Int](default = Some(2))
   val noHeuristics: ScallopOption[Boolean] = opt[Boolean]()
+  val indent: ScallopOption[Int] = opt[Int](default = Some(2))
+  val lineOverhang: ScallopOption[Int] = opt[Int](default = Some(0))
   verify()
 
 @main
@@ -29,16 +30,17 @@ def main(args: String*): Unit =
     if conf.useScalaDocstringRegexes() then (scalaDocstringBlockRe, scalaDocstringLineRe)
     else (markerBlockRe, markerLineRe)
 
-  val formatter = Formatter(
+  val formatter = FileFormatter(
     blockRe = conf.blockRegex.map(Regex(_)).getOrElse(defaultBlockRe),
     lineRe = conf.lineRegex.map(Regex(_)).getOrElse(defaultLineRe),
-    indent = conf.indent(),
     heuristics = !conf.noHeuristics(),
+    indent = conf.indent(),
+    lineOverhang = conf.lineOverhang(),
   )
 
   reformat(conf.path(), formatter)
 
-def reformat(path: Path, formatter: Formatter): Unit =
+def reformat(path: Path, formatter: FileFormatter): Unit =
   if Files.isDirectory(path) then
     val files = Files.list(path).toScala(Seq)
     for file <- files do reformat(file, formatter)

@@ -9,7 +9,7 @@ case class Lines(lines: IndexedSeq[Line]):
 
   def joinHorizontally(right: Lines): (Lines, Int) = Lines.joinHorizontally(this, right)
 
-  override def toString: String = lines.reverse.mkString("\n")
+  def toLines: IndexedSeq[String] = lines.reverse.map(_.toString)
 
 object Lines:
   def empty: Lines = Lines(IndexedSeq())
